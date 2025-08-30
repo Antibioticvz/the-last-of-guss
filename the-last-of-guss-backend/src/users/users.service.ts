@@ -18,7 +18,7 @@ export class UsersService {
 
     // Determine role based on username according to plan
     let role: Role = Role.USER;
-    if (username === 'admin') {
+    if (username.toLowerCase().includes('admin')) {
       role = Role.ADMIN;
     } else if (username === 'Никита') {
       role = Role.NIKITA;
