@@ -1,99 +1,140 @@
-import { LogIn, UserPlus } from "lucide-react"
 import React, { useState } from "react"
-import { authService } from "../services/api"
-import type { User } from "../types"
+import { useNavigate } from "react-router-dom"
+import { ApiError, apiService } from "../services/api"
+import { LoginDto, RegisterDto } from "../types"
 
-interface LoginPageProps {
-  onLogin: (token: string, user: User) => void
-}
-
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+const LoginPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true)
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
+  const [formData, setFormData] = useState<LoginDto>({
+    username: "",
+    password: "",
+  })
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [error, setError] = useState<string>("")
+  const navigate = useNavigate()
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!username.trim() || !password.trim()) {
-      setError("Please fill in all fields")
-      return
-    }
-
     setLoading(true)
     setError("")
 
     try {
-      const response = isLogin
-        ? await authService.login({ username, password })
-        : await authService.register({ username, password })
-
-      onLogin(response.access_token, response.user)
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Authentication failed")
+      if (isLogin) {
+        await apiService.login(formData)
+      } else {
+        await apiService.register(formData as RegisterDto)
+      }
+      navigate("/rounds")
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError("Произошла ошибка. Попробуйте снова.")
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="login-page">
-      <div className="login-container">
-        <div className="login-header">
-          <h1>🎯 The Last of Guss</h1>
-          <p>The ultimate tapping competition</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            🦆 The Last of Guss
+          </h1>
+          <p className="text-gray-600">
+            {isLogin ? "Войдите в игру" : "Создайте аккаунт"}
+          </p>
         </div>
 
-        <div className="login-form-container">
-          <div className="login-tabs">
-            <button
-              className={`tab ${isLogin ? "active" : ""}`}
-              onClick={() => setIsLogin(true)}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
-              <LogIn size={16} />
-              Login
-            </button>
-            <button
-              className={`tab ${!isLogin ? "active" : ""}`}
-              onClick={() => setIsLogin(false)}
-            >
-              <UserPlus size={16} />
-              Register
-            </button>
+              Имя пользователя
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Введите имя пользователя"
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="login-form">
-            <div className="form-group">
-              <label htmlFor="username">Username</label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                placeholder="Enter your username"
-                disabled={loading}
-              />
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Пароль
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Введите пароль"
+            />
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
+              {error}
             </div>
+          )}
 
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                disabled={loading}
-              />
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? "Загрузка..." : isLogin ? "Войти" : "Зарегистрироваться"}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            {isLogin
+              ? "Нет аккаунта? Зарегистрироваться"
+              : "Уже есть аккаунт? Войти"}
+          </button>
+        </div>
+
+        {/* Demo accounts info */}
+        <div className="mt-8 p-4 bg-gray-50 rounded-md">
+          <h3 className="font-medium text-gray-800 mb-2">Демо аккаунты:</h3>
+          <div className="text-sm text-gray-600 space-y-1">
+            <div>
+              <strong>admin</strong> / password123 (Администратор)
             </div>
-
-            {error && <div className="error-message">{error}</div>}
-
-            <button type="submit" className="submit-button" disabled={loading}>
-              {loading ? "Please wait..." : isLogin ? "Login" : "Register"}
-            </button>
-          </form>
+            <div>
+              <strong>Никита</strong> / password123 (Особая роль)
+            </div>
+            <div>
+              <strong>player1</strong> / password123 (Игрок)
+            </div>
+          </div>
         </div>
       </div>
     </div>

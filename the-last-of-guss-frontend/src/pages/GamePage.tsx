@@ -1,175 +1,349 @@
-import { LogOut, Target, Timer, Trophy } from "lucide-react"
 import React, { useCallback, useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import { gameService } from "../services/api"
-import { socketService } from "../services/socket"
-import type { GameState, Round, User } from "../types"
+import { Link, useNavigate, useParams } from "react-router-dom"
+import { ApiError, apiService } from "../services/api"
+import { RoundWithStats, User } from "../types"
 
-interface GamePageProps {
-  user: User
-  onLogout: () => void
-}
+const GamePage: React.FC = () => {
+  const { roundId } = useParams<{ roundId: string }>()
+  const navigate = useNavigate()
 
-const GamePage: React.FC<GamePageProps> = ({ user, onLogout }) => {
-  const [gameState, setGameState] = useState<GameState>({
-    currentRound: null,
-    timeLeft: 0,
-    canTap: false,
-    userScore: 0,
-    leaderboard: [],
-  })
-  const [tapCount, setTapCount] = useState(0)
+  const [round, setRound] = useState<RoundWithStats | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [tapping, setTapping] = useState(false)
+  const [tapAnimation, setTapAnimation] = useState(false)
+  const [error, setError] = useState<string>("")
+  const [lastTapScore, setLastTapScore] = useState<number | null>(null)
 
-  const loadGameState = useCallback(async () => {
+  const loadRoundData = useCallback(async () => {
+    if (!roundId) return
+
     try {
-      const state = await gameService.getGameState()
-      setGameState(state)
-    } catch (error) {
-      console.error("Failed to load game state:", error)
-    } finally {
-      setLoading(false)
+      const [roundData, userData] = await Promise.all([
+        apiService.getRound(roundId),
+        apiService.getProfile().catch(() => null),
+      ])
+      setRound(roundData.round)
+      if (userData) setUser(userData)
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 401) {
+        navigate("/login")
+      } else {
+        setError(
+          err instanceof ApiError ? err.message : "Ошибка загрузки раунда"
+        )
+      }
     }
-  }, [])
+  }, [roundId, navigate])
 
   useEffect(() => {
-    loadGameState()
+    loadRoundData().finally(() => setLoading(false))
+  }, [loadRoundData])
 
-    // Setup socket listeners
-    socketService.onRoundStart((round: Round) => {
-      setGameState(prev => ({ ...prev, currentRound: round, canTap: true }))
-      setTapCount(0)
-    })
+  // Auto-refresh round data every 2 seconds
+  useEffect(() => {
+    if (!round) return
 
-    socketService.onRoundEnd(() => {
-      setGameState(prev => ({
-        ...prev,
-        currentRound: null,
-        canTap: false,
-        timeLeft: 0,
-      }))
-    })
+    const interval = setInterval(() => {
+      loadRoundData()
+    }, 2000)
 
-    socketService.onGameStateUpdate((state: GameState) => {
-      setGameState(state)
-    })
-
-    socketService.onLeaderboardUpdate(leaderboard => {
-      setGameState(prev => ({ ...prev, leaderboard }))
-    })
-
-    return () => {
-      socketService.off("roundStart")
-      socketService.off("roundEnd")
-      socketService.off("gameStateUpdate")
-      socketService.off("leaderboardUpdate")
-    }
-  }, [loadGameState])
+    return () => clearInterval(interval)
+  }, [round, loadRoundData])
 
   const handleTap = async () => {
-    if (!gameState.canTap || !gameState.currentRound) return
+    if (!roundId || !round || round.status !== "ACTIVE" || tapping) return
 
     try {
-      const result = await gameService.tap(gameState.currentRound.id)
-      setTapCount(prev => prev + 1)
-      setGameState(prev => ({
-        ...prev,
-        userScore: prev.userScore + result.score,
-      }))
-    } catch (error) {
-      console.error("Tap failed:", error)
+      setTapping(true)
+      setTapAnimation(true)
+      setError("")
+
+      const response = await apiService.tapRound(roundId)
+      setLastTapScore(response.tapScore)
+
+      // Update local score immediately for better UX
+      setRound(prev =>
+        prev
+          ? {
+              ...prev,
+              myScore: response.totalScore,
+              totalTaps: prev.totalTaps + 1,
+              totalScore: prev.totalScore + response.tapScore,
+            }
+          : null
+      )
+
+      // Reset animation after 200ms
+      setTimeout(() => setTapAnimation(false), 200)
+
+      // Hide tap score after 1 second
+      setTimeout(() => setLastTapScore(null), 1000)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Ошибка при тапе")
+    } finally {
+      setTapping(false)
     }
   }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, "0")}`
+  const formatTimeLeft = (timeLeft: number) => {
+    const seconds = Math.max(0, Math.floor(timeLeft / 1000))
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`
+  }
+
+  const getStatusDisplay = () => {
+    if (!round) return { text: "Загрузка...", color: "text-gray-600" }
+
+    switch (round.status) {
+      case "COOLDOWN":
+        return {
+          text: `До начала раунда: ${formatTimeLeft(round.timeLeft)}`,
+          color: "text-yellow-600",
+        }
+      case "ACTIVE":
+        return {
+          text: `Раунд активен! Осталось: ${formatTimeLeft(round.timeLeft)}`,
+          color: "text-green-600",
+        }
+      case "COMPLETED":
+        return {
+          text: "Раунд завершен!",
+          color: "text-gray-600",
+        }
+      default:
+        return { text: "Неизвестный статус", color: "text-gray-600" }
+    }
   }
 
   if (loading) {
     return (
-      <div className="game-page loading">
-        <div className="loading-spinner">Loading game...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Загрузка раунда...</p>
+        </div>
       </div>
     )
   }
 
-  return (
-    <div className="game-page">
-      <header className="game-header">
-        <div className="user-info">
-          <h2>🎯 The Last of Guss</h2>
-          <span className="username">{user.username}</span>
-          {user.role === "NIKITA" && (
-            <span className="nikita-badge">👑 NIKITA</span>
-          )}
-        </div>
-        <nav className="game-nav">
-          <Link to="/leaderboard" className="nav-link">
-            <Trophy size={16} />
-            Leaderboard
-          </Link>
-          <button onClick={onLogout} className="logout-btn">
-            <LogOut size={16} />
-            Logout
-          </button>
-        </nav>
-      </header>
-
-      <main className="game-main">
-        <div className="game-status">
-          {gameState.currentRound ? (
-            <div className="round-active">
-              <div className="timer">
-                <Timer size={20} />
-                <span>{formatTime(gameState.timeLeft)}</span>
-              </div>
-              <div className="round-info">
-                <h3>Round Active!</h3>
-                <p>Tap as fast as you can!</p>
-              </div>
-            </div>
-          ) : (
-            <div className="round-waiting">
-              <h3>Waiting for next round...</h3>
-              <p>Get ready to tap!</p>
-            </div>
-          )}
-        </div>
-
-        <div className="tap-area">
-          <button
-            className={`tap-button ${gameState.canTap ? "active" : "disabled"}`}
-            onClick={handleTap}
-            disabled={!gameState.canTap}
+  if (!round) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">❌</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Раунд не найден
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Возможно, раунд был удален или не существует
+          </p>
+          <Link
+            to="/rounds"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
-            <Target size={48} />
-            <span>TAP!</span>
-          </button>
+            Вернуться к списку раундов
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
-          <div className="tap-stats">
-            <div className="stat">
-              <label>This Round</label>
-              <span>{tapCount}</span>
-            </div>
-            <div className="stat">
-              <label>Total Score</label>
-              <span>{gameState.userScore}</span>
-            </div>
+  const status = getStatusDisplay()
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+          <Link
+            to="/rounds"
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            ← Назад к раундам
+          </Link>
+          <div className="text-right">
+            <span className="text-gray-700">
+              <strong>{user?.username}</strong>
+              {user?.role === "NIKITA" && (
+                <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
+                  Особая роль
+                </span>
+              )}
+            </span>
           </div>
         </div>
+      </header>
 
-        <div className="mini-leaderboard">
-          <h3>Top Players</h3>
-          <div className="leaderboard-list">
-            {gameState.leaderboard.slice(0, 5).map((player, index) => (
-              <div key={player.userId} className="leaderboard-item">
-                <span className="rank">#{index + 1}</span>
-                <span className="username">{player.username}</span>
-                <span className="score">{player.totalScore}</span>
+      {/* Main Game Area */}
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        {/* Status Header */}
+        <div className="text-center mb-8">
+          <h1 className={`text-3xl font-bold mb-2 ${status.color}`}>
+            {status.text}
+          </h1>
+          <p className="text-gray-600">Раунд ID: {roundId?.slice(0, 8)}...</p>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md text-center">
+            {error}
+          </div>
+        )}
+
+        {/* Game Content */}
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Guss Section - Main Game */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+              {round.status === "ACTIVE" ? (
+                <>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                    🎯 Тапайте по гусю!
+                  </h2>
+                  <div className="relative inline-block">
+                    {/* Tap Animation */}
+                    {lastTapScore !== null && (
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+                        <span
+                          className={`text-2xl font-bold ${
+                            lastTapScore === 10
+                              ? "text-yellow-600"
+                              : "text-green-600"
+                          }`}
+                        >
+                          +{lastTapScore}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Guss */}
+                    <button
+                      onClick={handleTap}
+                      disabled={tapping}
+                      className={`text-8xl hover:scale-110 active:scale-95 transition-transform duration-150 cursor-pointer select-none ${
+                        tapAnimation ? "animate-pulse" : ""
+                      } ${tapping ? "opacity-50" : ""}`}
+                      style={{ lineHeight: 1 }}
+                    >
+                      🦆
+                    </button>
+                  </div>
+
+                  <div className="mt-6 space-y-2">
+                    <p className="text-gray-600">
+                      Кликните по гусю, чтобы заработать очки!
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      1 очко за тап • 10 очков за каждый 11-й тап
+                    </p>
+                  </div>
+                </>
+              ) : round.status === "COOLDOWN" ? (
+                <>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                    ⏳ Подготовка к раунду
+                  </h2>
+                  <div className="text-6xl mb-6">🦆</div>
+                  <p className="text-gray-600">
+                    Раунд скоро начнется! Приготовьтесь тапать.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                    🏁 Раунд завершен
+                  </h2>
+                  <div className="text-6xl mb-6">🦆</div>
+                  <div className="text-center space-y-2">
+                    {round.winner ? (
+                      <>
+                        <p className="text-xl font-semibold text-yellow-600 mb-2">
+                          🏆 Победитель: {round.winner.username}
+                        </p>
+                        <p className="text-lg text-gray-700">
+                          Счет победителя: {round.winner.score} очков
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-lg text-gray-600">
+                        Ничья! Никто не набрал очков.
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Stats Sidebar */}
+          <div className="space-y-6">
+            {/* My Score */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                📊 Мои очки
+              </h3>
+              <div className="text-3xl font-bold text-blue-600">
+                {round.myScore ?? 0}
               </div>
-            ))}
+              {user?.role === "NIKITA" && (
+                <p className="text-sm text-purple-600 mt-2">
+                  * Ваши очки не засчитываются
+                </p>
+              )}
+            </div>
+
+            {/* Round Stats */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                🎮 Статистика раунда
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Всего тапов:</span>
+                  <span className="font-semibold">{round.totalTaps}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Общий счет:</span>
+                  <span className="font-semibold">{round.totalScore}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Статус:</span>
+                  <span
+                    className={`font-semibold ${
+                      round.status === "ACTIVE"
+                        ? "text-green-600"
+                        : round.status === "COOLDOWN"
+                        ? "text-yellow-600"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    {round.status === "ACTIVE"
+                      ? "Активен"
+                      : round.status === "COOLDOWN"
+                      ? "Ожидание"
+                      : "Завершен"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Game Rules */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                📜 Правила игры
+              </h3>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>• 1 очко за каждый тап</p>
+                <p>• 10 очков за каждый 11-й тап</p>
+                <p>• Тапать можно только в активном раунде</p>
+                <p>• Побеждает игрок с наибольшим счетом</p>
+              </div>
+            </div>
           </div>
         </div>
       </main>
