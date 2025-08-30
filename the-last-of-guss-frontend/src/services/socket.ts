@@ -1,12 +1,10 @@
 import { io, Socket } from 'socket.io-client';
-import { GameState, Round } from '../types';
+import type { GameState, Round } from '../types';
 
 class SocketService {
   private socket: Socket | null = null;
-  private token: string | null = null;
 
   connect(token: string) {
-    this.token = token;
     this.socket = io('http://localhost:3000', {
       auth: {
         token: token,
