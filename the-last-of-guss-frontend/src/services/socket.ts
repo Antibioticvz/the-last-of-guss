@@ -1,11 +1,13 @@
 import { io, Socket } from "socket.io-client"
 import type { GameState, Round } from "../types"
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
+
 class SocketService {
   private socket: Socket | null = null
 
   connect(token: string) {
-    this.socket = io("http://localhost:3000", {
+    this.socket = io(API_BASE_URL, {
       auth: {
         token: token,
       },
