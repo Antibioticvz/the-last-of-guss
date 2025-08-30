@@ -1,7 +1,7 @@
 import { ArrowLeft, Crown, Medal, Trophy } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { apiService } from '../services/api';
+
 import { socketService } from '../services/socket';
 import type { User } from '../types';
 
@@ -21,11 +21,11 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadLeaderboard = async () => {
+    const loadLeaderboard = () => {
       try {
         // Используем getRounds для получения данных о лидербордах
         // TODO: Добавить отдельный эндпоинт для лидерборда в API
-        const data = await apiService.getRounds();
+        // const data = await apiService.getRounds();
         // Преобразуем данные раундов в формат лидерборда
         const mockLeaderboard: LeaderboardEntry[] = [
           { userId: user.id, username: user.username, totalScore: 0 },
@@ -33,14 +33,12 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
         setLeaderboard(mockLeaderboard);
       } catch (error) {
         console.error('Failed to load leaderboard:', error);
-        // Показываем пустой лидерборд при ошибке
-        setLeaderboard([]);
       } finally {
         setLoading(false);
       }
     };
 
-    void loadLeaderboard();
+    loadLeaderboard();
 
     // Listen for real-time leaderboard updates
     socketService.onLeaderboardUpdate((updatedLeaderboard) => {
@@ -50,7 +48,7 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
     return () => {
       socketService.off('leaderboardUpdate');
     };
-  }, []);
+  }, [user.id, user.username]);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {

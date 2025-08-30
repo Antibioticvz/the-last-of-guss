@@ -32,7 +32,7 @@ const LoginPage: React.FC = () => {
       } else {
         await apiService.register(formData as RegisterDto);
       }
-      navigate('/rounds');
+      void navigate('/rounds');
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -56,7 +56,12 @@ const LoginPage: React.FC = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }}
+          className="space-y-6"
+        >
           <div>
             <label
               htmlFor="username"

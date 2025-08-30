@@ -29,7 +29,7 @@ export class RoundsController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  async createRound(@Request() req: AuthenticatedRequest) {
+  async createRound() {
     const round = await this.roundsService.createRound();
     return {
       message: 'Round created successfully',

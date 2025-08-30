@@ -27,7 +27,7 @@ const GamePage: React.FC = () => {
       if (userData) setUser(userData);
     } catch (err) {
       if (err instanceof ApiError && err.statusCode === 401) {
-        navigate('/login');
+        void navigate('/login');
       } else {
         setError(
           err instanceof ApiError ? err.message : 'Ошибка загрузки раунда',
@@ -223,7 +223,7 @@ const GamePage: React.FC = () => {
 
                     {/* Guss */}
                     <button
-                      onClick={handleTap}
+                      onClick={() => void handleTap()}
                       disabled={tapping}
                       className={`text-8xl hover:scale-110 active:scale-95 transition-transform duration-150 cursor-pointer select-none ${
                         tapAnimation ? 'animate-pulse' : ''

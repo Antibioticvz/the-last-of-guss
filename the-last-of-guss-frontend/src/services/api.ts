@@ -1,3 +1,4 @@
+import axios, { AxiosError } from 'axios';
 import type {
   CreateRoundResponse,
   LoginDto,
@@ -9,9 +10,9 @@ import type {
   TapResponse,
   User,
 } from '../types';
-import axios, { AxiosError } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL: string =
+  (import.meta.env.VITE_API_URL as string) || 'http://localhost:3000';
 
 class ApiError extends Error {
   public statusCode: number;
@@ -48,50 +49,6 @@ api.interceptors.response.use(
 );
 
 class ApiService {
-  private async fetchWithCredentials(
-    url: string,
-    options: RequestInit = {},
-  ): Promise<Response> {
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      ...options,
-      credentials: 'include', // Include cookies for JWT authentication
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      let errorData: { message: string; error: string; statusCode: number };
-      try {
-        errorData = (await response.json()) as {
-          message: string;
-          error: string;
-          statusCode: number;
-        };
-      } catch (error) {
-        const apiError = error as {
-          response?: { data?: { message?: string; statusCode?: number } };
-          message?: string;
-        };
-        errorData = {
-          message:
-            apiError.response?.data?.message ||
-            apiError.message ||
-            'Network error',
-          error: 'NETWORK_ERROR',
-          statusCode: apiError.response?.data?.statusCode || 500,
-        };
-      }
-      throw new ApiError(
-        response.status,
-        errorData.message || 'Request failed',
-      );
-    }
-
-    return response;
-  }
-
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
@@ -112,8 +69,8 @@ class ApiService {
         statusCode: number;
       };
       throw new ApiError(
-        errorData.message || 'Request failed',
         response.status,
+        errorData.message || 'Request failed',
       );
     }
 

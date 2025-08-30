@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiError, apiService } from '../services/api';
-import { Round, User } from '../types';
+import type { Round, User } from '../types';
 
 const RoundsListPage: React.FC = () => {
   const [rounds, setRounds] = useState<Round[]>([]);
@@ -11,11 +11,7 @@ const RoundsListPage: React.FC = () => {
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [roundsData, userData] = await Promise.all([
@@ -26,7 +22,7 @@ const RoundsListPage: React.FC = () => {
       setUser(userData);
     } catch (err) {
       if (err instanceof ApiError && err.statusCode === 401) {
-        navigate('/login');
+        void navigate('/login');
       } else {
         setError(
           err instanceof ApiError ? err.message : 'Ошибка загрузки данных',
@@ -35,14 +31,18 @@ const RoundsListPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const handleCreateRound = async () => {
     try {
       setCreating(true);
       setError('');
       const response = await apiService.createRound();
-      navigate(`/rounds/${response.round.id}`);
+      void navigate(`/rounds/${response.round.id}`);
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : 'Ошибка создания раунда',
@@ -55,10 +55,10 @@ const RoundsListPage: React.FC = () => {
   const handleLogout = async () => {
     try {
       await apiService.logout();
-      navigate('/login');
+      void navigate('/login');
     } catch (err) {
       console.error('Logout error:', err);
-      navigate('/login');
+      void navigate('/login');
     }
   };
 
@@ -135,7 +135,7 @@ const RoundsListPage: React.FC = () => {
               )}
             </span>
             <button
-              onClick={handleLogout}
+              onClick={() => void handleLogout()}
               className="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
             >
               Выйти
@@ -150,7 +150,7 @@ const RoundsListPage: React.FC = () => {
         {user?.role === 'ADMIN' && (
           <div className="mb-6 text-right">
             <button
-              onClick={handleCreateRound}
+              onClick={() => void handleCreateRound()}
               disabled={creating}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -184,7 +184,9 @@ const RoundsListPage: React.FC = () => {
             {rounds.map((round) => (
               <div
                 key={round.id}
-                onClick={() => navigate(`/rounds/${round.id}`)}
+                onClick={() => {
+                  void navigate(`/rounds/${round.id}`);
+                }}
                 className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border border-gray-200"
               >
                 <div className="flex justify-between items-start mb-4">
@@ -223,7 +225,7 @@ const RoundsListPage: React.FC = () => {
         {/* Refresh Button */}
         <div className="mt-8 text-center">
           <button
-            onClick={loadData}
+            onClick={() => void loadData()}
             className="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
           >
             🔄 Обновить список
