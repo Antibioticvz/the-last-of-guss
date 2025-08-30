@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { User } from './types';
+import type { User } from './types';
 import { authService } from './services/api';
 import { socketService } from './services/socket';
 import LoginPage from './pages/LoginPage';
