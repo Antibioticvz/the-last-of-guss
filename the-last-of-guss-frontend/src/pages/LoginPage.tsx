@@ -1,48 +1,48 @@
-import React, { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { ApiError, apiService } from "../services/api"
-import { LoginDto, RegisterDto } from "../types"
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ApiError, apiService } from '../services/api';
+import type { LoginDto, RegisterDto } from '../types';
 
 const LoginPage: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true)
+  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState<LoginDto>({
-    username: "",
-    password: "",
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string>("")
-  const navigate = useNavigate()
+    username: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+  const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
     try {
       if (isLogin) {
-        await apiService.login(formData)
+        await apiService.login(formData);
       } else {
-        await apiService.register(formData as RegisterDto)
+        await apiService.register(formData as RegisterDto);
       }
-      navigate("/rounds")
+      navigate('/rounds');
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setError(err.message);
       } else {
-        setError("Произошла ошибка. Попробуйте снова.")
+        setError('Произошла ошибка. Попробуйте снова.');
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
@@ -52,7 +52,7 @@ const LoginPage: React.FC = () => {
             🦆 The Last of Guss
           </h1>
           <p className="text-gray-600">
-            {isLogin ? "Войдите в игру" : "Создайте аккаунт"}
+            {isLogin ? 'Войдите в игру' : 'Создайте аккаунт'}
           </p>
         </div>
 
@@ -106,7 +106,7 @@ const LoginPage: React.FC = () => {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? "Загрузка..." : isLogin ? "Войти" : "Зарегистрироваться"}
+            {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
           </button>
         </form>
 
@@ -116,8 +116,8 @@ const LoginPage: React.FC = () => {
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
             {isLogin
-              ? "Нет аккаунта? Зарегистрироваться"
-              : "Уже есть аккаунт? Войти"}
+              ? 'Нет аккаунта? Зарегистрироваться'
+              : 'Уже есть аккаунт? Войти'}
           </button>
         </div>
 
@@ -138,7 +138,7 @@ const LoginPage: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;

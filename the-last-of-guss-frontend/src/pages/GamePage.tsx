@@ -1,69 +1,69 @@
-import React, { useCallback, useEffect, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
-import { ApiError, apiService } from "../services/api"
-import { RoundWithStats, User } from "../types"
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ApiError, apiService } from '../services/api';
+import type { RoundWithStats, User } from '../types';
 
 const GamePage: React.FC = () => {
-  const { roundId } = useParams<{ roundId: string }>()
-  const navigate = useNavigate()
+  const { roundId } = useParams<{ roundId: string }>();
+  const navigate = useNavigate();
 
-  const [round, setRound] = useState<RoundWithStats | null>(null)
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [tapping, setTapping] = useState(false)
-  const [tapAnimation, setTapAnimation] = useState(false)
-  const [error, setError] = useState<string>("")
-  const [lastTapScore, setLastTapScore] = useState<number | null>(null)
+  const [round, setRound] = useState<RoundWithStats | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [tapping, setTapping] = useState(false);
+  const [tapAnimation, setTapAnimation] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [lastTapScore, setLastTapScore] = useState<number | null>(null);
 
   const loadRoundData = useCallback(async () => {
-    if (!roundId) return
+    if (!roundId) return;
 
     try {
       const [roundData, userData] = await Promise.all([
         apiService.getRound(roundId),
         apiService.getProfile().catch(() => null),
-      ])
-      setRound(roundData.round)
-      if (userData) setUser(userData)
+      ]);
+      setRound(roundData.round);
+      if (userData) setUser(userData);
     } catch (err) {
       if (err instanceof ApiError && err.statusCode === 401) {
-        navigate("/login")
+        navigate('/login');
       } else {
         setError(
-          err instanceof ApiError ? err.message : "Ошибка загрузки раунда"
-        )
+          err instanceof ApiError ? err.message : 'Ошибка загрузки раунда',
+        );
       }
     }
-  }, [roundId, navigate])
+  }, [roundId, navigate]);
 
   useEffect(() => {
-    loadRoundData().finally(() => setLoading(false))
-  }, [loadRoundData])
+    void loadRoundData().finally(() => setLoading(false));
+  }, [loadRoundData]);
 
   // Auto-refresh round data every 2 seconds
   useEffect(() => {
-    if (!round) return
+    if (!round) return;
 
     const interval = setInterval(() => {
-      loadRoundData()
-    }, 2000)
+      void loadRoundData();
+    }, 2000);
 
-    return () => clearInterval(interval)
-  }, [round, loadRoundData])
+    return () => clearInterval(interval);
+  }, [round, loadRoundData]);
 
   const handleTap = async () => {
-    if (!roundId || !round || round.status !== "ACTIVE" || tapping) return
+    if (!roundId || !round || round.status !== 'ACTIVE' || tapping) return;
 
     try {
-      setTapping(true)
-      setTapAnimation(true)
-      setError("")
+      setTapping(true);
+      setTapAnimation(true);
+      setError('');
 
-      const response = await apiService.tapRound(roundId)
-      setLastTapScore(response.tapScore)
+      const response = await apiService.tapRound(roundId);
+      setLastTapScore(response.tapScore);
 
       // Update local score immediately for better UX
-      setRound(prev =>
+      setRound((prev) =>
         prev
           ? {
               ...prev,
@@ -71,53 +71,53 @@ const GamePage: React.FC = () => {
               totalTaps: prev.totalTaps + 1,
               totalScore: prev.totalScore + response.tapScore,
             }
-          : null
-      )
+          : null,
+      );
 
       // Reset animation after 200ms
-      setTimeout(() => setTapAnimation(false), 200)
+      void setTimeout(() => setTapAnimation(false), 200);
 
       // Hide tap score after 1 second
-      setTimeout(() => setLastTapScore(null), 1000)
+      void setTimeout(() => setLastTapScore(null), 1000);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Ошибка при тапе")
+      setError(err instanceof ApiError ? err.message : 'Ошибка при тапе');
     } finally {
-      setTapping(false)
+      setTapping(false);
     }
-  }
+  };
 
   const formatTimeLeft = (timeLeft: number) => {
-    const seconds = Math.max(0, Math.floor(timeLeft / 1000))
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+    const seconds = Math.max(0, Math.floor(timeLeft / 1000));
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds
       .toString()
-      .padStart(2, "0")}`
-  }
+      .padStart(2, '0')}`;
+  };
 
   const getStatusDisplay = () => {
-    if (!round) return { text: "Загрузка...", color: "text-gray-600" }
+    if (!round) return { text: 'Загрузка...', color: 'text-gray-600' };
 
     switch (round.status) {
-      case "COOLDOWN":
+      case 'COOLDOWN':
         return {
           text: `До начала раунда: ${formatTimeLeft(round.timeLeft)}`,
-          color: "text-yellow-600",
-        }
-      case "ACTIVE":
+          color: 'text-yellow-600',
+        };
+      case 'ACTIVE':
         return {
           text: `Раунд активен! Осталось: ${formatTimeLeft(round.timeLeft)}`,
-          color: "text-green-600",
-        }
-      case "COMPLETED":
+          color: 'text-green-600',
+        };
+      case 'COMPLETED':
         return {
-          text: "Раунд завершен!",
-          color: "text-gray-600",
-        }
+          text: 'Раунд завершен!',
+          color: 'text-gray-600',
+        };
       default:
-        return { text: "Неизвестный статус", color: "text-gray-600" }
+        return { text: 'Неизвестный статус', color: 'text-gray-600' };
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -127,7 +127,7 @@ const GamePage: React.FC = () => {
           <p className="text-gray-600">Загрузка раунда...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!round) {
@@ -149,10 +149,10 @@ const GamePage: React.FC = () => {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
-  const status = getStatusDisplay()
+  const status = getStatusDisplay();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -168,7 +168,7 @@ const GamePage: React.FC = () => {
           <div className="text-right">
             <span className="text-gray-700">
               <strong>{user?.username}</strong>
-              {user?.role === "NIKITA" && (
+              {user?.role === 'NIKITA' && (
                 <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
                   Особая роль
                 </span>
@@ -200,7 +200,7 @@ const GamePage: React.FC = () => {
           {/* Guss Section - Main Game */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-              {round.status === "ACTIVE" ? (
+              {round.status === 'ACTIVE' ? (
                 <>
                   <h2 className="text-2xl font-bold text-gray-800 mb-6">
                     🎯 Тапайте по гусю!
@@ -212,8 +212,8 @@ const GamePage: React.FC = () => {
                         <span
                           className={`text-2xl font-bold ${
                             lastTapScore === 10
-                              ? "text-yellow-600"
-                              : "text-green-600"
+                              ? 'text-yellow-600'
+                              : 'text-green-600'
                           }`}
                         >
                           +{lastTapScore}
@@ -226,8 +226,8 @@ const GamePage: React.FC = () => {
                       onClick={handleTap}
                       disabled={tapping}
                       className={`text-8xl hover:scale-110 active:scale-95 transition-transform duration-150 cursor-pointer select-none ${
-                        tapAnimation ? "animate-pulse" : ""
-                      } ${tapping ? "opacity-50" : ""}`}
+                        tapAnimation ? 'animate-pulse' : ''
+                      } ${tapping ? 'opacity-50' : ''}`}
                       style={{ lineHeight: 1 }}
                     >
                       🦆
@@ -243,7 +243,7 @@ const GamePage: React.FC = () => {
                     </p>
                   </div>
                 </>
-              ) : round.status === "COOLDOWN" ? (
+              ) : round.status === 'COOLDOWN' ? (
                 <>
                   <h2 className="text-2xl font-bold text-gray-800 mb-6">
                     ⏳ Подготовка к раунду
@@ -290,7 +290,7 @@ const GamePage: React.FC = () => {
               <div className="text-3xl font-bold text-blue-600">
                 {round.myScore ?? 0}
               </div>
-              {user?.role === "NIKITA" && (
+              {user?.role === 'NIKITA' && (
                 <p className="text-sm text-purple-600 mt-2">
                   * Ваши очки не засчитываются
                 </p>
@@ -315,18 +315,18 @@ const GamePage: React.FC = () => {
                   <span className="text-gray-600">Статус:</span>
                   <span
                     className={`font-semibold ${
-                      round.status === "ACTIVE"
-                        ? "text-green-600"
-                        : round.status === "COOLDOWN"
-                        ? "text-yellow-600"
-                        : "text-gray-600"
+                      round.status === 'ACTIVE'
+                        ? 'text-green-600'
+                        : round.status === 'COOLDOWN'
+                          ? 'text-yellow-600'
+                          : 'text-gray-600'
                     }`}
                   >
-                    {round.status === "ACTIVE"
-                      ? "Активен"
-                      : round.status === "COOLDOWN"
-                      ? "Ожидание"
-                      : "Завершен"}
+                    {round.status === 'ACTIVE'
+                      ? 'Активен'
+                      : round.status === 'COOLDOWN'
+                        ? 'Ожидание'
+                        : 'Завершен'}
                   </span>
                 </div>
               </div>
@@ -348,7 +348,7 @@ const GamePage: React.FC = () => {
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default GamePage
+export default GamePage;

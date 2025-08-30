@@ -1,14 +1,14 @@
-import React from "react"
+import React from 'react';
 import {
   Navigate,
   Route,
   BrowserRouter as Router,
   Routes,
-} from "react-router-dom"
-import "./App.css"
-import GamePage from "./pages/GamePage"
-import LoginPage from "./pages/LoginPage"
-import RoundsListPage from "./pages/RoundsListPage"
+} from 'react-router-dom';
+import './App.css';
+import GamePage from './pages/GamePage';
+import LoginPage from './pages/LoginPage';
+import RoundsListPage from './pages/RoundsListPage';
 
 const App: React.FC = () => {
   return (
@@ -30,7 +30,7 @@ const App: React.FC = () => {
         </Routes>
       </div>
     </Router>
-  )
-}
+  );
+};
 
-export default App
+export default App;

@@ -1,100 +1,102 @@
-import React, { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { ApiError, apiService } from "../services/api"
-import { Round, User } from "../types"
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ApiError, apiService } from '../services/api';
+import { Round, User } from '../types';
 
 const RoundsListPage: React.FC = () => {
-  const [rounds, setRounds] = useState<Round[]>([])
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [creating, setCreating] = useState(false)
-  const [error, setError] = useState<string>("")
-  const navigate = useNavigate()
+  const [rounds, setRounds] = useState<Round[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string>('');
+  const navigate = useNavigate();
 
   useEffect(() => {
-    loadData()
-  }, [])
+    loadData();
+  }, []);
 
   const loadData = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const [roundsData, userData] = await Promise.all([
         apiService.getRounds(),
         apiService.getProfile(),
-      ])
-      setRounds(roundsData.rounds)
-      setUser(userData)
+      ]);
+      setRounds(roundsData.rounds);
+      setUser(userData);
     } catch (err) {
       if (err instanceof ApiError && err.statusCode === 401) {
-        navigate("/login")
+        navigate('/login');
       } else {
         setError(
-          err instanceof ApiError ? err.message : "Ошибка загрузки данных"
-        )
+          err instanceof ApiError ? err.message : 'Ошибка загрузки данных',
+        );
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleCreateRound = async () => {
     try {
-      setCreating(true)
-      setError("")
-      const response = await apiService.createRound()
-      navigate(`/rounds/${response.round.id}`)
+      setCreating(true);
+      setError('');
+      const response = await apiService.createRound();
+      navigate(`/rounds/${response.round.id}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Ошибка создания раунда")
+      setError(
+        err instanceof ApiError ? err.message : 'Ошибка создания раунда',
+      );
     } finally {
-      setCreating(false)
+      setCreating(false);
     }
-  }
+  };
 
   const handleLogout = async () => {
     try {
-      await apiService.logout()
-      navigate("/login")
+      await apiService.logout();
+      navigate('/login');
     } catch (err) {
-      console.error("Logout error:", err)
-      navigate("/login")
+      console.error('Logout error:', err);
+      navigate('/login');
     }
-  }
+  };
 
   const getStatusBadge = (round: Round) => {
-    const now = new Date()
-    const startTime = new Date(round.startTime)
-    const endTime = new Date(round.endTime)
+    const now = new Date();
+    const startTime = new Date(round.startTime);
+    const endTime = new Date(round.endTime);
 
     if (now < startTime) {
       return (
         <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
           Ожидание
         </span>
-      )
+      );
     } else if (now >= startTime && now <= endTime) {
       return (
         <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
           Активен
         </span>
-      )
+      );
     } else {
       return (
         <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
           Завершен
         </span>
-      )
+      );
     }
-  }
+  };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("ru-RU", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    })
-  }
+    return new Date(dateString).toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
 
   if (loading) {
     return (
@@ -104,7 +106,7 @@ const RoundsListPage: React.FC = () => {
           <p className="text-gray-600">Загрузка раундов...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -121,12 +123,12 @@ const RoundsListPage: React.FC = () => {
           <div className="flex items-center space-x-4">
             <span className="text-gray-700">
               Добро пожаловать, <strong>{user?.username}</strong>
-              {user?.role === "ADMIN" && (
+              {user?.role === 'ADMIN' && (
                 <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
                   Админ
                 </span>
               )}
-              {user?.role === "NIKITA" && (
+              {user?.role === 'NIKITA' && (
                 <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
                   Никита
                 </span>
@@ -145,14 +147,14 @@ const RoundsListPage: React.FC = () => {
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Create Round Button */}
-        {user?.role === "ADMIN" && (
+        {user?.role === 'ADMIN' && (
           <div className="mb-6 text-right">
             <button
               onClick={handleCreateRound}
               disabled={creating}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {creating ? "Создание..." : "+ Создать раунд"}
+              {creating ? 'Создание...' : '+ Создать раунд'}
             </button>
           </div>
         )}
@@ -172,14 +174,14 @@ const RoundsListPage: React.FC = () => {
               Нет доступных раундов
             </h3>
             <p className="text-gray-600">
-              {user?.role === "ADMIN"
-                ? "Создайте первый раунд, чтобы начать игру!"
-                : "Ожидайте создания нового раунда администратором."}
+              {user?.role === 'ADMIN'
+                ? 'Создайте первый раунд, чтобы начать игру!'
+                : 'Ожидайте создания нового раунда администратором.'}
             </p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {rounds.map(round => (
+            {rounds.map((round) => (
               <div
                 key={round.id}
                 onClick={() => navigate(`/rounds/${round.id}`)}
@@ -229,7 +231,7 @@ const RoundsListPage: React.FC = () => {
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default RoundsListPage
+export default RoundsListPage;
