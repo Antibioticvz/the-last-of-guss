@@ -1,98 +1,192 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# The Last of Guss - Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+**Браузерная игра для соревнования в скорости кликов по виртуальному гусю**
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🎯 Описание
 
-## Description
+Backend-сервер для игры "The Last of Guss", построенный на современном стеке технологий с акцентом на производительность, безопасность и масштабируемость.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🛠 Технологический стек
 
-## Project setup
+- **Framework:** NestJS (Node.js, TypeScript)
+- **База данных:** PostgreSQL
+- **ORM:** Prisma
+- **Аутентификация:** JWT токены в HttpOnly cookies
+- **Валидация:** class-validator, class-transformer
+- **Безопасность:** bcrypt для хеширования паролей
 
+## 🏗 Архитектура
+
+Приложение следует архитектурным принципам:
+- **Clean Architecture** с разделением слоев
+- **SOLID принципы**
+- **Dependency Injection** через NestJS
+- **Модульная структура** для масштабируемости
+
+### Основные модули:
+- **AuthModule** - Аутентификация и авторизация
+- **UsersModule** - Управление пользователями
+- **RoundsModule** - Управление игровыми раундами (в разработке)
+
+## 🚀 Быстрый старт
+
+### Предварительные требования
+- Node.js 18+
+- PostgreSQL 14+
+- npm или yarn
+
+### Установка
 ```bash
-$ npm install
+# Клонирование репозитория
+git clone <repository-url>
+cd the-last-of-guss-backend
+
+# Установка зависимостей
+npm install
+
+# Настройка переменных окружения
+cp .env.example .env
+# Отредактируйте .env файл с вашими настройками БД
 ```
 
-## Compile and run the project
-
+### Настройка базы данных
 ```bash
-# development
-$ npm run start
+# Генерация Prisma клиента
+npx prisma generate
 
-# watch mode
-$ npm run start:dev
+# Применение миграций
+npx prisma migrate dev --name init
 
-# production mode
-$ npm run start:prod
+# (Опционально) Заполнение тестовыми данными
+npx prisma db seed
 ```
 
-## Run tests
-
+### Запуск
 ```bash
-# unit tests
-$ npm run test
+# Режим разработки
+npm run start:dev
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# Продакшн
+npm run build
+npm run start:prod
 ```
 
-## Deployment
+Сервер будет доступен по адресу: http://localhost:3000
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 📡 API Эндпоинты
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Аутентификация
+- `POST /auth/register` - Регистрация пользователя
+- `POST /auth/login` - Вход в систему
+- `POST /auth/logout` - Выход из системы
+- `GET /auth/profile` - Получение профиля (защищенный)
+
+### Пользователи
+- Система ролей: `USER`, `ADMIN`, `NIKITA`
+- Автоматическое назначение ролей по username
+
+### В разработке
+- `POST /rounds` - Создание раунда (только ADMIN)
+- `GET /rounds` - Список раундов
+- `GET /rounds/:id` - Детали раунда
+- `POST /rounds/:id/tap` - Тап по гусю
+
+## 🔒 Безопасность
+
+- **JWT токены** в HttpOnly cookies для защиты от XSS
+- **Хеширование паролей** с помощью bcrypt
+- **Валидация входных данных** на всех уровнях
+- **CORS** настроен для фронтенда
+- **Rate limiting** (планируется)
+
+## 🧪 Тестирование
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Юнит тесты
+npm run test
+
+# E2E тесты
+npm run test:e2e
+
+# Покрытие тестами
+npm run test:cov
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 📊 База данных
 
-## Resources
+### Схема данных
+- **Users** - Пользователи с ролями
+- **Rounds** - Игровые раунды
+- **Taps** - Клики пользователей
 
-Check out a few resources that may come in handy when working with NestJS:
+### Миграции
+```bash
+# Создание новой миграции
+npx prisma migrate dev --name <migration_name>
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Применение миграций
+npx prisma migrate deploy
+```
 
-## Support
+## 🚀 Деплоймент
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Приложение готово к развертыванию в production:
 
-## Stay in touch
+```bash
+# Сборка
+npm run build
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Запуск
+NODE_ENV=production npm run start:prod
+```
 
-## License
+### Переменные окружения
+```env
+DATABASE_URL="postgresql://user:pass@localhost:5432/db"
+JWT_SECRET="your-secret-key"
+ROUND_DURATION=60000
+COOLDOWN_DURATION=30000
+NODE_ENV=production
+PORT=3000
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## 🔧 Разработка
+
+### Статус проекта
+✅ **Этап 1: Аутентификация** - Завершен
+- Регистрация и вход пользователей
+- JWT аутентификация
+- Система ролей
+- Защищенные эндпоинты
+
+🚧 **Этап 2: Игровая механика** - В разработке
+- Управление раундами
+- Система тапов
+- Подсчет очков
+
+📋 **Планируется**
+- WebSocket для real-time обновлений
+- Система лидерборда
+- Админ панель
+
+### Архитектурные решения
+
+**Консистентность данных:**
+- Транзакции Prisma для атомарных операций
+- Optimistic locking для race conditions
+- Валидация на уровне БД и приложения
+
+**Масштабируемость:**
+- Stateless архитектура
+- Горизонтальное масштабирование
+- Кеширование критических данных
+
+## 👥 Команда
+
+- Backend разработка: NestJS + PostgreSQL + Prisma
+- Архитектура: Clean Architecture + SOLID
+- Тестирование: Jest + Supertest
+
+---
+
+*Создано как демонстрация современных подходов к разработке backend приложений*
