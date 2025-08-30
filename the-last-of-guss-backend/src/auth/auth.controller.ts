@@ -55,7 +55,7 @@ export class AuthController {
   }
 
   @Post('logout')
-  async logout(@Res() res: Response) {
+  logout(@Res() res: Response) {
     res.clearCookie('access_token');
     return res.status(HttpStatus.OK).json({
       message: 'Logout successful',
