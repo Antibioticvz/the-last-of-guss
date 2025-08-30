@@ -1,102 +1,142 @@
-# The Last of Guss
+# 🎯 The Last of Guss
 
-"The Last of Guss" — это соревновательная браузерная игра, в которой игроки нажимают на виртуального гуся, чтобы набрать очки и побороться за первое место в ограниченных по времени раундах.
+Welcome to **The Last of Guss** - the ultimate competitive tapping game! This is a real-time multiplayer game where players compete to tap as fast as possible during timed rounds.
 
-## Демонстрация
+## 📋 Project Overview
 
-[Ссылка на живую демонстрацию] (если доступно)
+This project consists of two main parts:
 
-_(Здесь можно разместить GIF или скриншоты игрового процесса)_
+- **Backend**: NestJS + TypeScript + Prisma + PostgreSQL
+- **Frontend**: Vite + React + TypeScript + Socket.IO
 
-## Технологический стек
+## 🚀 Quick Start
 
-- **Бэкенд:** Node.js, NestJS, TypeScript (strict mode), PostgreSQL, Prisma ORM
-- **Фронтенд:** React, TypeScript, Vite, React Router, Shadcn/UI, Tailwind CSS, Zustand
-- **Аутентификация:** JWT-токены, хранящиеся в HttpOnly cookie
+### Prerequisites
 
-## Архитектура
+- Node.js 20.11.1+ (20.19+ recommended)
+- npm or yarn
+- PostgreSQL database
 
-Приложение спроектировано с учетом масштабируемости и консистентности данных.
+### 🔧 Setup Instructions
 
-- **Масштабируемость:** Бэкенд является stateless, что позволяет запускать его в нескольких экземплярах за реверс-прокси, подключенных к одной базе данных. Сессии пользователей не привязаны к конкретному экземпляру сервера.
-- **Консистентность данных:** Для обработки одновременных нажатий и обеспечения целостности данных приложение использует транзакции базы данных для критически важных операций.
-- **Развертывание:** Продакшн-сборка предназначена для запуска простой командой `node dist/index.js`. Архитектура дружелюбна к контейнеризации, хотя Docker-файлы не включены в этот проект.
+1. **Clone the repository**
 
-## Установка и запуск
+   ```bash
+   git clone <repository-url>
+   cd the-last-of-guss
+   ```
 
-Чтобы запустить проект локально, выполните следующие шаги:
+2. **Setup Backend**
 
-1.  **Клонируйте репозиторий:**
+   ```bash
+   cd the-last-of-guss-backend
+   npm install
 
-    ```sh
-    git clone <URL-репозитория>
-    cd the-last-of-guss
-    ```
+   # Configure environment variables
+   cp .env.example .env
+   # Edit .env with your database connection details
 
-2.  **Установите зависимости:**
-    Этот проект является монорепозиторием. Установите зависимости как для бэкенда, так и для фронтенда из корневого каталога.
+   # Setup database
+   npx prisma migrate dev
+   npx prisma generate
 
-    ```sh
-    npm install
-    ```
+   # Start backend server
+   npm run start:dev
+   ```
 
-3.  **Настройте переменные окружения:**
-    Создайте файл `.env` в каталоге бэкенд-проекта (например, `the-last-of-guss-backend/.env`). Он должен содержать следующие переменные:
+3. **Setup Frontend**
 
-    ```env
-    DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
-    JWT_SECRET="your_super_secret_key"
-    ROUND_DURATION=60000 # в миллисекундах (например, 60 секунд)
-    COOLDOWN_DURATION=10000 # в миллисекундах (например, 10 секунд)
-    ```
+   ```bash
+   cd ../the-last-of-guss-frontend
+   npm install
 
-4.  **Примените схему базы данных:**
-    Выполните команду Prisma для синхронизации схемы вашей базы данных.
+   # Start frontend development server
+   npm run dev
+   ```
 
-    ```sh
-    npx prisma db push
-    ```
+4. **Access the Game**
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:3000
 
-5.  **Запустите приложение:**
+## 🎮 How to Play
 
-    - **Сборка проекта:**
-      ```sh
-      npm run build
-      ```
-    - **Запуск сервера:**
-      ```sh
-      npm start
-      ```
-    - **Запуск фронтенда (для разработки):**
-      ```sh
-      npm run dev # (в каталоге фронтенда)
-      ```
+1. **Register/Login**: Create an account or log in to existing one
+2. **Wait for Round**: Rounds start automatically at scheduled intervals
+3. **Tap Fast**: When a round starts, tap the button as fast as you can!
+4. **Compete**: See your score and compete on the leaderboard
+5. **Special Role**: If you're NIKITA, you get the crown! 👑
 
-6.  **Запустите тесты:**
-    ```sh
-    npm test
-    ```
+## 🏗️ Architecture
 
-## Документация API
+### Backend Features
 
-API построено на NestJS и включает управление доступом на основе ролей. Спецификация Swagger/OpenAPI доступна по эндпоинту `/api` при запущенном сервере.
+- JWT Authentication
+- Real-time WebSocket connections
+- Automatic round management
+- Leaderboard tracking
+- Role-based permissions (USER, ADMIN, NIKITA)
 
-### Ключевые эндпоинты
+### Frontend Features
 
-- `POST /auth/register`: Регистрация нового пользователя.
-- `POST /auth/login`: Вход в систему и получение HttpOnly JWT cookie.
-- `GET /rounds`: Получение списка всех игровых раундов.
-- `GET /rounds/:id`: Получение подробной информации о конкретном раунде.
-- `POST /rounds`: Создание нового раунда (только для администраторов).
-- `POST /rounds/:id/tap`: Регистрация нажатия (тапа) в текущем активном раунде.
+- Modern React with TypeScript
+- Real-time game updates via Socket.IO
+- Responsive design
+- Dark theme UI
+- Interactive leaderboard
 
-## Особенности реализации
+## 🔄 Development Stages
 
-- **Управление доступом на основе ролей (RBAC):** Пользователи могут иметь разные роли (`USER`, `ADMIN`, `NIKITA`), которые предоставляют различные разрешения. Например, только пользователи с ролью `ADMIN` могут создавать новые раунды. Роль `NIKITA` — это особый случай для демонстрации, при котором нажатия не засчитываются.
-- **Безопасная аутентификация:** Используются JWT, хранящиеся в `HttpOnly` cookie, для защиты от XSS-атак. `JwtAuthGuard` защищает чувствительные эндпоинты.
-- **Транзакционные операции:** Основная игровая механика нажатий обрабатывается в рамках транзакции Prisma (`$transaction`), чтобы обеспечить атомарность подсчета очков и записи нажатий, предотвращая состояния гонки.
-- **Управление конфигурацией:** Конфигурация приложения (например, продолжительность раунда) управляется через модуль `@nestjs/config`, что позволяет легко изменять параметры через переменные окружения.
+This project follows a structured development plan:
 
-## Автор
+- ✅ **Stage 0**: Project setup and basic structure
+- 🚧 **Stage 1**: Authentication system
+- 🚧 **Stage 2**: Game mechanics and rounds
+- 🚧 **Stage 3**: Real-time communication
+- 🚧 **Stage 4**: Admin panel and controls
+- 🚧 **Stage 5**: Testing and deployment
 
-[Victor Zadorozhnyy / [Профиль на GitHub](https://github.com/Antibioticvz)]
+## 📱 Tech Stack
+
+### Backend
+
+- **NestJS** - Node.js framework
+- **TypeScript** - Type safety
+- **Prisma** - Database ORM
+- **PostgreSQL** - Database
+- **Socket.IO** - Real-time communication
+- **JWT** - Authentication
+- **bcrypt** - Password hashing
+
+### Frontend
+
+- **Vite** - Build tool
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **Socket.IO Client** - Real-time communication
+- **React Router** - Navigation
+- **Lucide React** - Icons
+- **Axios** - HTTP client
+
+## 🎯 Game Rules
+
+- Rounds last for configurable duration (default: 30 seconds)
+- Each tap during an active round awards points
+- Players can only tap during active rounds
+- Leaderboard shows total accumulated scores
+- Special recognition for the NIKITA role
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is for educational and entertainment purposes.
+
+---
+
+**Ready to become the last of Guss?** 🏆

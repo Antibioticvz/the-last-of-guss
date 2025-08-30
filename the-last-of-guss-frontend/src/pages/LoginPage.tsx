@@ -1,41 +1,41 @@
-import React, { useState } from 'react';
-import type { User } from '../types';
-import { authService } from '../services/api';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus } from "lucide-react"
+import React, { useState } from "react"
+import { authService } from "../services/api"
+import type { User } from "../types"
 
 interface LoginPageProps {
-  onLogin: (token: string, user: User) => void;
+  onLogin: (token: string, user: User) => void
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [isLogin, setIsLogin] = useState(true)
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!username.trim() || !password.trim()) {
-      setError('Please fill in all fields');
-      return;
+      setError("Please fill in all fields")
+      return
     }
 
-    setLoading(true);
-    setError('');
+    setLoading(true)
+    setError("")
 
     try {
       const response = isLogin
         ? await authService.login({ username, password })
-        : await authService.register({ username, password });
-      
-      onLogin(response.access_token, response.user);
+        : await authService.register({ username, password })
+
+      onLogin(response.access_token, response.user)
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Authentication failed');
+      setError(err.response?.data?.message || "Authentication failed")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="login-page">
@@ -48,14 +48,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <div className="login-form-container">
           <div className="login-tabs">
             <button
-              className={`tab ${isLogin ? 'active' : ''}`}
+              className={`tab ${isLogin ? "active" : ""}`}
               onClick={() => setIsLogin(true)}
             >
               <LogIn size={16} />
               Login
             </button>
             <button
-              className={`tab ${!isLogin ? 'active' : ''}`}
+              className={`tab ${!isLogin ? "active" : ""}`}
               onClick={() => setIsLogin(false)}
             >
               <UserPlus size={16} />
@@ -70,7 +70,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 id="username"
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={e => setUsername(e.target.value)}
                 placeholder="Enter your username"
                 disabled={loading}
               />
@@ -82,7 +82,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 disabled={loading}
               />
@@ -90,18 +90,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
             {error && <div className="error-message">{error}</div>}
 
-            <button
-              type="submit"
-              className="submit-button"
-              disabled={loading}
-            >
-              {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Register')}
+            <button type="submit" className="submit-button" disabled={loading}>
+              {loading ? "Please wait..." : isLogin ? "Login" : "Register"}
             </button>
           </form>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage

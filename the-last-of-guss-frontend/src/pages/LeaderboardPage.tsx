@@ -1,84 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import type { User } from '../types';
-import { gameService } from '../services/api';
-import { socketService } from '../services/socket';
-import { ArrowLeft, Crown, Trophy, Medal } from 'lucide-react';
+import { ArrowLeft, Crown, Medal, Trophy } from "lucide-react"
+import React, { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
+import { gameService } from "../services/api"
+import { socketService } from "../services/socket"
+import type { User } from "../types"
 
 interface LeaderboardPageProps {
-  user: User;
-  onLogout: () => void;
+  user: User
+  onLogout: () => void
 }
 
 interface LeaderboardEntry {
-  userId: string;
-  username: string;
-  totalScore: number;
+  userId: string
+  username: string
+  totalScore: number
 }
 
 const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadLeaderboard = async () => {
       try {
-        const data = await gameService.getLeaderboard();
-        setLeaderboard(data);
+        const data = await gameService.getLeaderboard()
+        setLeaderboard(data)
       } catch (error) {
-        console.error('Failed to load leaderboard:', error);
+        console.error("Failed to load leaderboard:", error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    loadLeaderboard();
+    loadLeaderboard()
 
     // Listen for real-time leaderboard updates
-    socketService.onLeaderboardUpdate((updatedLeaderboard) => {
-      setLeaderboard(updatedLeaderboard);
-    });
+    socketService.onLeaderboardUpdate(updatedLeaderboard => {
+      setLeaderboard(updatedLeaderboard)
+    })
 
     return () => {
-      socketService.off('leaderboardUpdate');
-    };
-  }, []);
+      socketService.off("leaderboardUpdate")
+    }
+  }, [])
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Crown className="rank-icon gold" size={20} />;
+        return <Crown className="rank-icon gold" size={20} />
       case 2:
-        return <Trophy className="rank-icon silver" size={20} />;
+        return <Trophy className="rank-icon silver" size={20} />
       case 3:
-        return <Medal className="rank-icon bronze" size={20} />;
+        return <Medal className="rank-icon bronze" size={20} />
       default:
-        return <span className="rank-number">#{rank}</span>;
+        return <span className="rank-number">#{rank}</span>
     }
-  };
+  }
 
   const getRankClass = (rank: number) => {
     switch (rank) {
       case 1:
-        return 'rank-1';
+        return "rank-1"
       case 2:
-        return 'rank-2';
+        return "rank-2"
       case 3:
-        return 'rank-3';
+        return "rank-3"
       default:
-        return '';
+        return ""
     }
-  };
+  }
 
   if (loading) {
     return (
       <div className="leaderboard-page loading">
         <div className="loading-spinner">Loading leaderboard...</div>
       </div>
-    );
+    )
   }
 
-  const userRank = leaderboard.findIndex(entry => entry.userId === user.id) + 1;
+  const userRank = leaderboard.findIndex(entry => entry.userId === user.id) + 1
 
   return (
     <div className="leaderboard-page">
@@ -98,7 +98,9 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
               <div className="rank">{getRankIcon(userRank)}</div>
               <div className="user-info">
                 <span className="username">{user.username}</span>
-                {user.role === 'NIKITA' && <span className="nikita-badge">👑 NIKITA</span>}
+                {user.role === "NIKITA" && (
+                  <span className="nikita-badge">👑 NIKITA</span>
+                )}
               </div>
               <div className="score">
                 {leaderboard[userRank - 1]?.totalScore || 0} points
@@ -116,21 +118,23 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
               </div>
             ) : (
               leaderboard.map((entry, index) => {
-                const rank = index + 1;
-                const isCurrentUser = entry.userId === user.id;
-                
+                const rank = index + 1
+                const isCurrentUser = entry.userId === user.id
+
                 return (
                   <div
                     key={entry.userId}
-                    className={`leaderboard-entry ${getRankClass(rank)} ${isCurrentUser ? 'current-user' : ''}`}
+                    className={`leaderboard-entry ${getRankClass(rank)} ${
+                      isCurrentUser ? "current-user" : ""
+                    }`}
                   >
-                    <div className="rank-section">
-                      {getRankIcon(rank)}
-                    </div>
+                    <div className="rank-section">{getRankIcon(rank)}</div>
                     <div className="player-info">
                       <span className="username">
                         {entry.username}
-                        {isCurrentUser && <span className="you-indicator">(You)</span>}
+                        {isCurrentUser && (
+                          <span className="you-indicator">(You)</span>
+                        )}
                       </span>
                     </div>
                     <div className="score-section">
@@ -138,7 +142,7 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
                       <span className="points-label">points</span>
                     </div>
                   </div>
-                );
+                )
               })
             )}
           </div>
@@ -151,7 +155,9 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
           </div>
           <div className="stat">
             <span className="stat-label">Highest Score</span>
-            <span className="stat-value">{leaderboard[0]?.totalScore || 0}</span>
+            <span className="stat-value">
+              {leaderboard[0]?.totalScore || 0}
+            </span>
           </div>
           {userRank > 0 && (
             <div className="stat">
@@ -162,7 +168,7 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
         </div>
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default LeaderboardPage;
+export default LeaderboardPage

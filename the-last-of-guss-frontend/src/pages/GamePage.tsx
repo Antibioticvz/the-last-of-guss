@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import type { User, GameState, Round } from '../types';
-import { gameService } from '../services/api';
-import { socketService } from '../services/socket';
-import { Trophy, LogOut, Target, Timer } from 'lucide-react';
+import { LogOut, Target, Timer, Trophy } from "lucide-react"
+import React, { useCallback, useEffect, useState } from "react"
+import { Link } from "react-router-dom"
+import { gameService } from "../services/api"
+import { socketService } from "../services/socket"
+import type { GameState, Round, User } from "../types"
 
 interface GamePageProps {
-  user: User;
-  onLogout: () => void;
+  user: User
+  onLogout: () => void
 }
 
 const GamePage: React.FC<GamePageProps> = ({ user, onLogout }) => {
@@ -16,75 +16,83 @@ const GamePage: React.FC<GamePageProps> = ({ user, onLogout }) => {
     timeLeft: 0,
     canTap: false,
     userScore: 0,
-    leaderboard: []
-  });
-  const [tapCount, setTapCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+    leaderboard: [],
+  })
+  const [tapCount, setTapCount] = useState(0)
+  const [loading, setLoading] = useState(true)
 
   const loadGameState = useCallback(async () => {
     try {
-      const state = await gameService.getGameState();
-      setGameState(state);
+      const state = await gameService.getGameState()
+      setGameState(state)
     } catch (error) {
-      console.error('Failed to load game state:', error);
+      console.error("Failed to load game state:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    loadGameState();
+    loadGameState()
 
     // Setup socket listeners
     socketService.onRoundStart((round: Round) => {
-      setGameState(prev => ({ ...prev, currentRound: round, canTap: true }));
-      setTapCount(0);
-    });
+      setGameState(prev => ({ ...prev, currentRound: round, canTap: true }))
+      setTapCount(0)
+    })
 
     socketService.onRoundEnd(() => {
-      setGameState(prev => ({ ...prev, currentRound: null, canTap: false, timeLeft: 0 }));
-    });
+      setGameState(prev => ({
+        ...prev,
+        currentRound: null,
+        canTap: false,
+        timeLeft: 0,
+      }))
+    })
 
     socketService.onGameStateUpdate((state: GameState) => {
-      setGameState(state);
-    });
+      setGameState(state)
+    })
 
-    socketService.onLeaderboardUpdate((leaderboard) => {
-      setGameState(prev => ({ ...prev, leaderboard }));
-    });
+    socketService.onLeaderboardUpdate(leaderboard => {
+      setGameState(prev => ({ ...prev, leaderboard }))
+    })
 
     return () => {
-      socketService.off('roundStart');
-      socketService.off('roundEnd');
-      socketService.off('gameStateUpdate');
-      socketService.off('leaderboardUpdate');
-    };
-  }, [loadGameState]);
+      socketService.off("roundStart")
+      socketService.off("roundEnd")
+      socketService.off("gameStateUpdate")
+      socketService.off("leaderboardUpdate")
+    }
+  }, [loadGameState])
 
   const handleTap = async () => {
-    if (!gameState.canTap || !gameState.currentRound) return;
+    if (!gameState.canTap || !gameState.currentRound) return
 
     try {
-      const result = await gameService.tap(gameState.currentRound.id);
-      setTapCount(prev => prev + 1);
-      setGameState(prev => ({ ...prev, userScore: prev.userScore + result.score }));
+      const result = await gameService.tap(gameState.currentRound.id)
+      setTapCount(prev => prev + 1)
+      setGameState(prev => ({
+        ...prev,
+        userScore: prev.userScore + result.score,
+      }))
     } catch (error) {
-      console.error('Tap failed:', error);
+      console.error("Tap failed:", error)
     }
-  };
+  }
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
 
   if (loading) {
     return (
       <div className="game-page loading">
         <div className="loading-spinner">Loading game...</div>
       </div>
-    );
+    )
   }
 
   return (
@@ -93,7 +101,9 @@ const GamePage: React.FC<GamePageProps> = ({ user, onLogout }) => {
         <div className="user-info">
           <h2>🎯 The Last of Guss</h2>
           <span className="username">{user.username}</span>
-          {user.role === 'NIKITA' && <span className="nikita-badge">👑 NIKITA</span>}
+          {user.role === "NIKITA" && (
+            <span className="nikita-badge">👑 NIKITA</span>
+          )}
         </div>
         <nav className="game-nav">
           <Link to="/leaderboard" className="nav-link">
@@ -130,14 +140,14 @@ const GamePage: React.FC<GamePageProps> = ({ user, onLogout }) => {
 
         <div className="tap-area">
           <button
-            className={`tap-button ${gameState.canTap ? 'active' : 'disabled'}`}
+            className={`tap-button ${gameState.canTap ? "active" : "disabled"}`}
             onClick={handleTap}
             disabled={!gameState.canTap}
           >
             <Target size={48} />
             <span>TAP!</span>
           </button>
-          
+
           <div className="tap-stats">
             <div className="stat">
               <label>This Round</label>
@@ -164,7 +174,7 @@ const GamePage: React.FC<GamePageProps> = ({ user, onLogout }) => {
         </div>
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default GamePage;
+export default GamePage

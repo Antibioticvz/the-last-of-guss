@@ -1,54 +1,60 @@
-import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import type { User } from './types';
-import { authService } from './services/api';
-import { socketService } from './services/socket';
-import LoginPage from './pages/LoginPage';
-import GamePage from './pages/GamePage';
-import LeaderboardPage from './pages/LeaderboardPage';
-import './App.css';
+import { useEffect, useState } from "react"
+import {
+  Navigate,
+  Route,
+  BrowserRouter as Router,
+  Routes,
+} from "react-router-dom"
+import "./App.css"
+import GamePage from "./pages/GamePage"
+import LeaderboardPage from "./pages/LeaderboardPage"
+import LoginPage from "./pages/LoginPage"
+import { authService } from "./services/api"
+import { socketService } from "./services/socket"
+import type { User } from "./types"
 
 function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token")
     if (token) {
-      authService.getProfile()
-        .then((userData) => {
-          setUser(userData);
-          socketService.connect(token);
+      authService
+        .getProfile()
+        .then(userData => {
+          setUser(userData)
+          socketService.connect(token)
         })
         .catch(() => {
-          localStorage.removeItem('token');
+          localStorage.removeItem("token")
         })
         .finally(() => {
-          setLoading(false);
-        });
+          setLoading(false)
+        })
     } else {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const handleLogin = (token: string, userData: User) => {
-    localStorage.setItem('token', token);
-    setUser(userData);
-    socketService.connect(token);
-  };
+    localStorage.setItem("token", token)
+    setUser(userData)
+    socketService.connect(token)
+  }
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    socketService.disconnect();
-  };
+    localStorage.removeItem("token")
+    setUser(null)
+    socketService.disconnect()
+  }
 
   if (loading) {
     return (
       <div className="loading-screen">
         <div className="loading-spinner">Loading...</div>
       </div>
-    );
+    )
   }
 
   return (
@@ -85,11 +91,14 @@ function App() {
               )
             }
           />
-          <Route path="/" element={<Navigate to={user ? "/game" : "/login"} replace />} />
+          <Route
+            path="/"
+            element={<Navigate to={user ? "/game" : "/login"} replace />}
+          />
         </Routes>
       </div>
     </Router>
-  );
+  )
 }
 
-export default App;
+export default App
