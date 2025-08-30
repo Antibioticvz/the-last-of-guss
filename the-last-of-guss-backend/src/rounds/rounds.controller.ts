@@ -6,8 +6,8 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { Request as ExpressRequest } from 'express';
 import { Role } from '@prisma/client';
+import { Request as ExpressRequest } from 'express';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
