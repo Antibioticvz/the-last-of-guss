@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  NIKITA
+}
+
+model User {
+  id           String @id @default(uuid())
+  username     String @unique
+  passwordHash String
+  role         Role   @default(USER)
+  createdAt    DateTime @default(now())
+  taps         Tap[]
+
+  @@map("users")
+}
+
+model Round {
+  id        String   @id @default(uuid())
+  startTime DateTime
+  endTime   DateTime
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  taps      Tap[]
+
+  @@map("rounds")
+}
+
+model Tap {
+  id        String   @id @default(uuid())
+  userId    String
+  roundId   String
+  score     Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  round     Round    @relation(fields: [roundId], references: [id])
+
+  @@map("taps")
+}
