@@ -20,7 +20,6 @@ const GamePage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [tapping, setTapping] = useState(false);
-  const [tapAnimation, setTapAnimation] = useState(false);
   const [error, setError] = useState<string>('');
   const [lastTapScore, setLastTapScore] = useState<number | null>(null);
 
@@ -65,7 +64,6 @@ const GamePage: React.FC = () => {
 
     try {
       setTapping(true);
-      setTapAnimation(true);
       setError('');
 
       const response = await apiService.tapRound(roundId);
@@ -82,9 +80,6 @@ const GamePage: React.FC = () => {
             }
           : null,
       );
-
-      // Reset animation after 200ms
-      void setTimeout(() => setTapAnimation(false), 200);
 
       // Hide tap score after 1 second
       void setTimeout(() => setLastTapScore(null), 1000);
