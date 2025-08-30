@@ -6,11 +6,20 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { RoundsService, RoundWithStats } from './rounds.service';
+
+interface AuthenticatedRequest extends ExpressRequest {
+  user: {
+    id: string;
+    username: string;
+    role: Role;
+  };
+}
 
 @Controller('rounds')
 @UseGuards(JwtAuthGuard)
@@ -20,7 +29,7 @@ export class RoundsController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  async createRound(@Request() req) {
+  async createRound(@Request() req: AuthenticatedRequest) {
     const round = await this.roundsService.createRound();
     return {
       message: 'Round created successfully',
@@ -39,7 +48,7 @@ export class RoundsController {
   @Get(':id')
   async findRound(
     @Param('id') id: string,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ): Promise<{ round: RoundWithStats }> {
     const userId = req.user?.id;
     const round = await this.roundsService.findRoundById(id, userId);
@@ -49,7 +58,7 @@ export class RoundsController {
   }
 
   @Post(':id/tap')
-  async tapGuss(@Param('id') id: string, @Request() req) {
+  async tapGuss(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     const userId = req.user.id;
     const result = await this.roundsService.handleTap(id, userId);
 
