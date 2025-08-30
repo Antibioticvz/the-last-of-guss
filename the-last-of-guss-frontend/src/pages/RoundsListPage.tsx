@@ -1,3 +1,13 @@
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiError, apiService } from '../services/api';
@@ -68,23 +78,11 @@ const RoundsListPage: React.FC = () => {
     const endTime = new Date(round.endTime);
 
     if (now < startTime) {
-      return (
-        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-          Ожидание
-        </span>
-      );
+      return <Badge variant="warning">Ожидание</Badge>;
     } else if (now >= startTime && now <= endTime) {
-      return (
-        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-          Активен
-        </span>
-      );
+      return <Badge variant="success">Активен</Badge>;
     } else {
-      return (
-        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
-          Завершен
-        </span>
-      );
+      return <Badge variant="muted">Завершен</Badge>;
     }
   };
 
@@ -112,34 +110,33 @@ const RoundsListPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="text-2xl font-bold tracking-tight">
               🦆 The Last of Guss
             </h1>
-            <p className="text-gray-600 mt-1">Список игровых раундов</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Список игровых раундов
+            </p>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-700">
-              Добро пожаловать, <strong>{user?.username}</strong>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground">
+              <strong className="text-foreground">{user?.username}</strong>
               {user?.role === 'ADMIN' && (
-                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                <Badge variant="outline" className="ml-2">
                   Админ
-                </span>
+                </Badge>
               )}
               {user?.role === 'NIKITA' && (
-                <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
+                <Badge variant="secondary" className="ml-2">
                   Никита
-                </span>
+                </Badge>
               )}
             </span>
-            <button
-              onClick={() => void handleLogout()}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            >
+            <Button variant="outline" onClick={() => void handleLogout()}>
               Выйти
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -149,21 +146,22 @@ const RoundsListPage: React.FC = () => {
         {/* Create Round Button */}
         {user?.role === 'ADMIN' && (
           <div className="mb-6 text-right">
-            <button
+            <Button
               onClick={() => void handleCreateRound()}
               disabled={creating}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {creating ? 'Создание...' : '+ Создать раунд'}
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-            {error}
-          </div>
+          <Card className="mb-6 border-destructive/50">
+            <CardContent className="p-4 text-destructive text-sm">
+              {error}
+            </CardContent>
+          </Card>
         )}
 
         {/* Rounds Grid */}
@@ -182,54 +180,51 @@ const RoundsListPage: React.FC = () => {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {rounds.map((round) => (
-              <div
+              <Card
                 key={round.id}
                 onClick={() => {
                   void navigate(`/rounds/${round.id}`);
                 }}
-                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border border-gray-200"
+                className="cursor-pointer transition-all hover:shadow-md"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-medium text-gray-800 truncate">Раунд</h3>
-                  {getStatusBadge(round)}
-                </div>
-
-                <div className="space-y-2 text-sm text-gray-600">
+                <CardHeader className="pb-4 flex flex-row items-start justify-between space-y-0">
                   <div>
-                    <span className="font-medium">Начало:</span>
-                    <br />
-                    {formatTime(round.startTime)}
-                  </div>
-                  <div>
-                    <span className="font-medium">Окончание:</span>
-                    <br />
-                    {formatTime(round.endTime)}
-                  </div>
-                  <div className="pt-2 border-t">
-                    <span className="text-xs text-gray-500">
+                    <CardTitle className="text-base">Раунд</CardTitle>
+                    <CardDescription>
                       ID: {round.id.slice(0, 8)}...
-                    </span>
+                    </CardDescription>
                   </div>
-                </div>
-
-                <div className="mt-4 flex justify-end">
-                  <span className="text-blue-600 text-sm font-medium">
-                    Перейти к раунду →
-                  </span>
-                </div>
-              </div>
+                  {getStatusBadge(round)}
+                </CardHeader>
+                <CardContent className="pt-0 text-sm space-y-3">
+                  <div>
+                    <div className="text-muted-foreground">Начало</div>
+                    <div className="font-medium">
+                      {formatTime(round.startTime)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Окончание</div>
+                    <div className="font-medium">
+                      {formatTime(round.endTime)}
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="justify-end pt-0">
+                  <Button variant="link" className="h-auto p-0 text-primary">
+                    Перейти →
+                  </Button>
+                </CardFooter>
+              </Card>
             ))}
           </div>
         )}
 
         {/* Refresh Button */}
         <div className="mt-8 text-center">
-          <button
-            onClick={() => void loadData()}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-          >
+          <Button variant="outline" onClick={() => void loadData()}>
             🔄 Обновить список
-          </button>
+          </Button>
         </div>
       </main>
     </div>

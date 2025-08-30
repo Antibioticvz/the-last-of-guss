@@ -1,7 +1,15 @@
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { ArrowLeft, Crown, Medal, Trophy } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-
 import { socketService } from '../services/socket';
 import type { User } from '../types';
 
@@ -9,7 +17,6 @@ interface LeaderboardPageProps {
   user: User;
   onLogout: () => void;
 }
-
 interface LeaderboardEntry {
   userId: string;
   username: string;
@@ -23,10 +30,6 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
   useEffect(() => {
     const loadLeaderboard = () => {
       try {
-        // Используем getRounds для получения данных о лидербордах
-        // TODO: Добавить отдельный эндпоинт для лидерборда в API
-        // const data = await apiService.getRounds();
-        // Преобразуем данные раундов в формат лидерборда
         const mockLeaderboard: LeaderboardEntry[] = [
           { userId: user.id, username: user.username, totalScore: 0 },
         ];
@@ -37,140 +40,169 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
         setLoading(false);
       }
     };
-
     loadLeaderboard();
-
-    // Listen for real-time leaderboard updates
-    socketService.onLeaderboardUpdate((updatedLeaderboard) => {
-      setLeaderboard(updatedLeaderboard);
-    });
-
+    socketService.onLeaderboardUpdate((updated) => setLeaderboard(updated));
     return () => {
       socketService.off('leaderboardUpdate');
     };
   }, [user.id, user.username]);
 
   const getRankIcon = (rank: number) => {
+    const size = 18;
     switch (rank) {
       case 1:
-        return <Crown className="rank-icon gold" size={20} />;
+        return <Crown size={size} className="text-yellow-500" />;
       case 2:
-        return <Trophy className="rank-icon silver" size={20} />;
+        return <Trophy size={size} className="text-gray-400" />;
       case 3:
-        return <Medal className="rank-icon bronze" size={20} />;
+        return <Medal size={size} className="text-amber-700" />;
       default:
-        return <span className="rank-number">#{rank}</span>;
+        return (
+          <span className="text-xs font-medium text-muted-foreground">
+            #{rank}
+          </span>
+        );
     }
   };
 
-  const getRankClass = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return 'rank-1';
-      case 2:
-        return 'rank-2';
-      case 3:
-        return 'rank-3';
-      default:
-        return '';
-    }
+  const highlightClass = (rank: number) => {
+    if (rank === 1)
+      return 'border-yellow-400/50 bg-yellow-50 dark:bg-yellow-400/5';
+    if (rank === 2) return 'border-gray-300/50 bg-gray-50 dark:bg-gray-400/5';
+    if (rank === 3)
+      return 'border-amber-600/40 bg-amber-50 dark:bg-amber-600/5';
+    return '';
   };
 
   if (loading) {
     return (
-      <div className="leaderboard-page loading">
-        <div className="loading-spinner">Loading leaderboard...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <div className="size-5 animate-spin rounded-full border-2 border-border border-t-primary" />
+          Загрузка лидерборда...
+        </div>
       </div>
     );
   }
 
-  const userRank =
-    leaderboard.findIndex((entry) => entry.userId === user.id) + 1;
+  const userRank = leaderboard.findIndex((e) => e.userId === user.id) + 1;
 
   return (
-    <div className="leaderboard-page">
-      <header className="page-header">
-        <Link to="/game" className="back-button">
-          <ArrowLeft size={20} />
-          Back to Game
-        </Link>
-        <h1>🏆 Leaderboard</h1>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/rounds" className="gap-1">
+              <ArrowLeft className="size-4" /> Назад
+            </Link>
+          </Button>
+          <h1 className="text-xl font-semibold tracking-tight">🏆 Лидерборд</h1>
+        </div>
       </header>
 
-      <main className="leaderboard-main">
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {userRank > 0 && (
-          <div className="user-stats">
-            <h2>Your Ranking</h2>
-            <div className="user-rank-card">
-              <div className="rank">{getRankIcon(userRank)}</div>
-              <div className="user-info">
-                <span className="username">{user.username}</span>
-                {user.role === 'NIKITA' && (
-                  <span className="nikita-badge">👑 NIKITA</span>
-                )}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Ваш результат</CardTitle>
+              <CardDescription>Текущее положение в таблице</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="flex items-center gap-4 rounded-lg border p-4">
+                <div className="flex flex-col items-center w-14">
+                  <div className="flex items-center justify-center size-10 rounded-md border bg-muted/40">
+                    {getRankIcon(userRank)}
+                  </div>
+                  <span className="mt-1 text-[10px] text-muted-foreground uppercase tracking-wide">
+                    Ранг
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 font-medium">
+                    {user.username}
+                    {user.role === 'NIKITA' && (
+                      <Badge variant="secondary">NIKITA</Badge>
+                    )}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Всего очков: {leaderboard[userRank - 1]?.totalScore ?? 0}
+                  </div>
+                </div>
               </div>
-              <div className="score">
-                {leaderboard[userRank - 1]?.totalScore || 0} points
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
-        <div className="leaderboard-section">
-          <h2>Top Players</h2>
-          <div className="leaderboard-list">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Топ игроки</CardTitle>
+            <CardDescription>Обновляется в реальном времени</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
             {leaderboard.length === 0 ? (
-              <div className="empty-leaderboard">
-                <p>No players yet. Be the first to play!</p>
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                Пока нет игроков. Станьте первым!
               </div>
             ) : (
-              leaderboard.map((entry, index) => {
-                const rank = index + 1;
-                const isCurrentUser = entry.userId === user.id;
-
-                return (
-                  <div
-                    key={entry.userId}
-                    className={`leaderboard-entry ${getRankClass(rank)} ${
-                      isCurrentUser ? 'current-user' : ''
-                    }`}
-                  >
-                    <div className="rank-section">{getRankIcon(rank)}</div>
-                    <div className="player-info">
-                      <span className="username">
+              <div className="flex flex-col gap-2">
+                {leaderboard.map((entry, i) => {
+                  const rank = i + 1;
+                  const isCurrent = entry.userId === user.id;
+                  return (
+                    <div
+                      key={entry.userId}
+                      className={`flex items-center gap-4 rounded-lg border p-3 text-sm transition-colors ${highlightClass(rank)} ${isCurrent ? 'ring-2 ring-primary/30' : ''}`}
+                    >
+                      <div className="flex items-center justify-center w-10">
+                        {getRankIcon(rank)}
+                      </div>
+                      <div className="flex-1 font-medium flex items-center gap-2">
                         {entry.username}
-                        {isCurrentUser && (
-                          <span className="you-indicator">(You)</span>
+                        {isCurrent && (
+                          <Badge variant="outline" className="text-xs px-1">
+                            Вы
+                          </Badge>
                         )}
-                      </span>
+                      </div>
+                      <div className="font-mono text-right tabular-nums text-primary font-semibold min-w-[72px]">
+                        {entry.totalScore}
+                      </div>
                     </div>
-                    <div className="score-section">
-                      <span className="score">{entry.totalScore}</span>
-                      <span className="points-label">points</span>
-                    </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+              </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="leaderboard-stats">
-          <div className="stat">
-            <span className="stat-label">Total Players</span>
-            <span className="stat-value">{leaderboard.length}</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Highest Score</span>
-            <span className="stat-value">
-              {leaderboard[0]?.totalScore || 0}
-            </span>
-          </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Игроков</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <span className="text-2xl font-bold">{leaderboard.length}</span>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Макс очков</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <span className="text-2xl font-bold">
+                {leaderboard[0]?.totalScore ?? 0}
+              </span>
+            </CardContent>
+          </Card>
           {userRank > 0 && (
-            <div className="stat">
-              <span className="stat-label">Your Rank</span>
-              <span className="stat-value">#{userRank}</span>
-            </div>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Ваш ранг</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <span className="text-2xl font-bold">#{userRank}</span>
+              </CardContent>
+            </Card>
           )}
         </div>
       </main>

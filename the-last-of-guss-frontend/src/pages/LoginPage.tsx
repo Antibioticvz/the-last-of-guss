@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiError, apiService } from '../services/api';
@@ -69,7 +71,7 @@ const LoginPage: React.FC = () => {
             >
               Имя пользователя
             </label>
-            <input
+            <Input
               type="text"
               id="username"
               name="username"
@@ -88,14 +90,13 @@ const LoginPage: React.FC = () => {
             >
               Пароль
             </label>
-            <input
+            <Input
               type="password"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Введите пароль"
             />
           </div>
@@ -106,24 +107,17 @@ const LoginPage: React.FC = () => {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
+          <Button type="submit" disabled={loading} className="w-full">
             {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
-          </button>
+          </Button>
         </form>
 
         <div className="mt-6 text-center">
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
+          <Button onClick={() => setIsLogin(!isLogin)} variant="link">
             {isLogin
               ? 'Нет аккаунта? Зарегистрироваться'
               : 'Уже есть аккаунт? Войти'}
-          </button>
+          </Button>
         </div>
 
         {/* Demo accounts info */}
