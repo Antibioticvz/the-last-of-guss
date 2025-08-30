@@ -5,7 +5,7 @@ import {
   BrowserRouter as Router,
   Routes,
 } from 'react-router-dom';
-import './App.css';
+
 import GamePage from './pages/GamePage';
 import LoginPage from './pages/LoginPage';
 import RoundsListPage from './pages/RoundsListPage';
