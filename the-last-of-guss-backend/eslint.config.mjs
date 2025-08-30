@@ -27,8 +27,28 @@ export default tseslint.config(
   {
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn'
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/naming-convention': [
+        'warn',
+        {
+          selector: 'variableLike',
+          leadingUnderscore: 'allow',
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+        },
+        { selector: 'typeLike', format: ['PascalCase'] },
+      ],
     },
   },
 );

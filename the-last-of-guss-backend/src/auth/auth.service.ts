@@ -17,7 +17,7 @@ export interface JwtPayload {
 }
 
 export interface AuthResult {
-  access_token: string;
+  accessToken: string;
   user: Omit<User, 'passwordHash'>;
 }
 
@@ -47,13 +47,14 @@ export class AuthService {
       role: user.role,
     };
 
-    const access_token = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload);
 
     // Return user without password hash
     const { passwordHash, ...userWithoutPassword } = user;
+    void passwordHash;
 
     return {
-      access_token,
+      accessToken,
       user: userWithoutPassword,
     };
   }
@@ -68,7 +69,10 @@ export class AuthService {
     }
 
     // Validate password
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.passwordHash as string,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -80,13 +84,14 @@ export class AuthService {
       role: user.role,
     };
 
-    const access_token = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload);
 
     // Return user without password hash
     const { passwordHash, ...userWithoutPassword } = user;
+    void passwordHash;
 
     return {
-      access_token,
+      accessToken,
       user: userWithoutPassword,
     };
   }

@@ -36,4 +36,4 @@ async function bootstrap() {
   console.log(`📚 API endpoints available at: http://localhost:${port}/auth/*`);
 }
 
-bootstrap();
+void bootstrap();

@@ -23,7 +23,7 @@ export class AuthController {
     const result = await this.authService.register(registerDto);
 
     // Set JWT token as HttpOnly cookie for security
-    res.cookie('access_token', result.access_token, {
+    res.cookie('access_token', result.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -41,7 +41,7 @@ export class AuthController {
     const result = await this.authService.login(loginDto);
 
     // Set JWT token as HttpOnly cookie for security
-    res.cookie('access_token', result.access_token, {
+    res.cookie('access_token', result.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
