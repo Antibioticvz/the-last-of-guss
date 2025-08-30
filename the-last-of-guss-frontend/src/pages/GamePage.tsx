@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { User, GameState, Round } from '../types';
+import type { User, GameState, Round } from '../types';
 import { gameService } from '../services/api';
 import { socketService } from '../services/socket';
 import { Trophy, LogOut, Target, Timer } from 'lucide-react';
@@ -41,7 +41,7 @@ const GamePage: React.FC<GamePageProps> = ({ user, onLogout }) => {
       setTapCount(0);
     });
 
-    socketService.onRoundEnd((round: Round) => {
+    socketService.onRoundEnd(() => {
       setGameState(prev => ({ ...prev, currentRound: null, canTap: false, timeLeft: 0 }));
     });
 
@@ -141,11 +141,11 @@ const GamePage: React.FC<GamePageProps> = ({ user, onLogout }) => {
           <div className="tap-stats">
             <div className="stat">
               <label>This Round</label>
-              <value>{tapCount}</value>
+              <span>{tapCount}</span>
             </div>
             <div className="stat">
               <label>Total Score</label>
-              <value>{gameState.userScore}</value>
+              <span>{gameState.userScore}</span>
             </div>
           </div>
         </div>

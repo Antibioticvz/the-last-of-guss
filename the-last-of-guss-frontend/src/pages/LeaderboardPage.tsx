@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User } from '../types';
+import type { User } from '../types';
 import { gameService } from '../services/api';
 import { socketService } from '../services/socket';
 import { ArrowLeft, Crown, Trophy, Medal } from 'lucide-react';
@@ -16,7 +16,7 @@ interface LeaderboardEntry {
   totalScore: number;
 }
 
-const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user, onLogout }) => {
+const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ user }) => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 

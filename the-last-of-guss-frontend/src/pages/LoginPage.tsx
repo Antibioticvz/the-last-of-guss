@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User } from '../types';
+import type { User } from '../types';
 import { authService } from '../services/api';
 import { LogIn, UserPlus } from 'lucide-react';
 

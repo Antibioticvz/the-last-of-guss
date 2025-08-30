@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AuthResponse, LoginDto, RegisterDto, User, Round, GameState } from '../types';
+import type { AuthResponse, LoginDto, RegisterDto, User, Round, GameState } from '../types';
 
 const API_BASE_URL = 'http://localhost:3000';
 
