@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -7,8 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ApiError, apiService } from '../services/api';
 import type { RoundWithStats, User } from '../types';
 
@@ -22,6 +21,12 @@ const GamePage: React.FC = () => {
   const [tapping, setTapping] = useState(false);
   const [error, setError] = useState<string>('');
   const [lastTapScore, setLastTapScore] = useState<number | null>(null);
+  const [localTimeLeft, setLocalTimeLeft] = useState<number>(0);
+  const transitionTriggeredRef = useRef(false);
+  const lastTapRef = useRef(0);
+  const tapsSinceRefreshRef = useRef(0);
+  const TAP_COOLDOWN_MS = 100;
+  const FORCED_REFRESH_TAPS = 10;
 
   const loadRoundData = useCallback(async () => {
     if (!roundId) return;
@@ -48,19 +53,58 @@ const GamePage: React.FC = () => {
     void loadRoundData().finally(() => setLoading(false));
   }, [loadRoundData]);
 
-  // Auto-refresh round data every 2 seconds
+  // Auto-refresh round data every 2 seconds (stable, not recreated on each tap)
   useEffect(() => {
-    if (!round) return;
-
     const interval = setInterval(() => {
       void loadRoundData();
     }, 2000);
 
     return () => clearInterval(interval);
+  }, [loadRoundData]);
+
+  useEffect(() => {
+    if (!round) return;
+    const start = new Date(round.startTime).getTime();
+    const end = new Date(round.endTime).getTime();
+    const tick = () => {
+      const now = Date.now();
+      const target = round.status === 'COOLDOWN' ? start : end;
+      const remaining = Math.max(0, target - now);
+      setLocalTimeLeft(remaining);
+      if (remaining <= 0) {
+        // Optimistic status switch
+        setRound((prev) => {
+          if (!prev) return prev;
+          if (prev.status === 'COOLDOWN' && now >= start && now < end) {
+            return { ...prev, status: 'ACTIVE' };
+          }
+          if (prev.status === 'ACTIVE' && now >= end) {
+            return { ...prev, status: 'COMPLETED' };
+          }
+          return prev;
+        });
+        if (!transitionTriggeredRef.current) {
+          transitionTriggeredRef.current = true;
+          void loadRoundData().finally(() => {
+            transitionTriggeredRef.current = false;
+          });
+        }
+      }
+    };
+    let rafId: number;
+    const loop = () => {
+      tick();
+      rafId = requestAnimationFrame(loop);
+    };
+    loop();
+    return () => cancelAnimationFrame(rafId);
   }, [round, loadRoundData]);
 
   const handleTap = async () => {
     if (!roundId || !round || round.status !== 'ACTIVE' || tapping) return;
+    const now = Date.now();
+    if (now - lastTapRef.current < TAP_COOLDOWN_MS) return; // debounce
+    lastTapRef.current = now;
 
     try {
       setTapping(true);
@@ -83,6 +127,12 @@ const GamePage: React.FC = () => {
 
       // Hide tap score after 1 second
       void setTimeout(() => setLastTapScore(null), 1000);
+
+      tapsSinceRefreshRef.current += 1;
+      if (tapsSinceRefreshRef.current >= FORCED_REFRESH_TAPS) {
+        tapsSinceRefreshRef.current = 0;
+        void loadRoundData();
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Ошибка при тапе');
     } finally {
@@ -105,12 +155,12 @@ const GamePage: React.FC = () => {
     switch (round.status) {
       case 'COOLDOWN':
         return {
-          text: `До начала раунда: ${formatTimeLeft(round.timeLeft)}`,
+          text: `До начала раунда: ${formatTimeLeft(localTimeLeft)}`,
           color: 'text-yellow-600',
         };
       case 'ACTIVE':
         return {
-          text: `Раунд активен! Осталось: ${formatTimeLeft(round.timeLeft)}`,
+          text: `Раунд активен! Осталось: ${formatTimeLeft(localTimeLeft)}`,
           color: 'text-green-600',
         };
       case 'COMPLETED':
@@ -144,7 +194,7 @@ const GamePage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <Button asChild className="mt-2">
-              <a href="/rounds">Вернуться к списку</a>
+              <Link to="/rounds">Вернуться к списку</Link>
             </Button>
           </CardContent>
         </Card>
@@ -156,24 +206,6 @@ const GamePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Button variant="link" asChild className="px-0 h-auto">
-            <a href="/rounds">← Назад</a>
-          </Button>
-          <div className="text-right text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">
-              {user?.username}
-            </span>
-            {user?.role === 'NIKITA' && (
-              <Badge variant="secondary" className="ml-2">
-                Особая роль
-              </Badge>
-            )}
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         <div className="text-center space-y-2">
           <h1 className={`text-3xl font-bold tracking-tight ${status.color}`}>
